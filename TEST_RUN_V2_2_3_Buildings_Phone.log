@@ -1,0 +1,37 @@
+PASS add/undo wall 180
+PASS add/undo door-wall 174
+PASS add/undo window-wall 206
+PASS add/undo floor 200
+PASS add/undo room 1120
+PASS add/undo column 242
+PASS add/undo square-column 82
+PASS add/undo beam 40
+PASS add/undo arch 2466
+PASS add/undo door 306
+PASS add/undo door-frame 80
+PASS add/undo window 80
+PASS add/undo double-window 144
+PASS add/undo window-pane 40
+PASS add/undo stairs 1698
+PASS add/undo corner-stairs 3078
+PASS add/undo spiral-stairs 482
+PASS add/undo ramp 258
+PASS add/undo landing 72
+PASS add/undo railing 1148
+PASS add/undo stair-rail 1256
+PASS add/undo fence 272
+PASS add/undo balcony 2600
+PASS add/undo gable-roof 546
+PASS add/undo hip-roof 66
+PASS add/undo flat-roof 288
+PASS add/undo chimney 120
+PASS add/undo wall-light 70
+PASS add/undo ceiling-light 50
+PASS add/undo lamp-post 380
+PASS custom dimensions, detail and step count [2.4000000953674316, 1.7999999523162842, 4]
+PASS invalid dimensions preserve scene
+PASS quick add
+PASS scene light shortcut
+PASS native save/reopen retains architecture and glass
+PASS architecture STL export
+PAGE_ERRORS []

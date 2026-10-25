@@ -1,0 +1,67 @@
+PASS wall default 180 vertices
+PASS door-wall default 174 vertices
+PASS window-wall default 206 vertices
+PASS floor default 200 vertices
+PASS room default 1120 vertices
+PASS column default 242 vertices
+PASS square-column default 82 vertices
+PASS beam default 40 vertices
+PASS arch default 2466 vertices
+PASS door default 306 vertices
+PASS door-frame default 80 vertices
+PASS window default 80 vertices
+PASS double-window default 144 vertices
+PASS window-pane default 40 vertices
+PASS stairs default 1698 vertices
+PASS corner-stairs default 3078 vertices
+PASS spiral-stairs default 482 vertices
+PASS ramp default 258 vertices
+PASS landing default 72 vertices
+PASS railing default 1148 vertices
+PASS stair-rail default 1256 vertices
+PASS fence default 272 vertices
+PASS balcony default 2600 vertices
+PASS gable-roof default 546 vertices
+PASS hip-roof default 66 vertices
+PASS flat-roof default 288 vertices
+PASS chimney default 120 vertices
+PASS wall-light default 70 vertices
+PASS ceiling-light default 50 vertices
+PASS lamp-post default 380 vertices
+PASS wall custom / fine 524 vertices
+PASS door-wall custom / fine 540 vertices
+PASS window-wall custom / fine 608 vertices
+PASS floor custom / fine 524 vertices
+PASS room custom / fine 1120 vertices
+PASS column custom / fine 626 vertices
+PASS square-column custom / fine 524 vertices
+PASS beam custom / fine 524 vertices
+PASS arch custom / fine 38274 vertices
+PASS door custom / fine 984 vertices
+PASS door-frame custom / fine 412 vertices
+PASS window custom / fine 556 vertices
+PASS double-window custom / fine 760 vertices
+PASS window-pane custom / fine 524 vertices
+PASS stairs custom / fine 26498 vertices
+PASS corner-stairs custom / fine 18310 vertices
+PASS spiral-stairs custom / fine 770 vertices
+PASS ramp custom / fine 2946 vertices
+PASS landing custom / fine 524 vertices
+PASS railing custom / fine 8596 vertices
+PASS stair-rail custom / fine 3628 vertices
+PASS fence custom / fine 1440 vertices
+PASS balcony custom / fine 15484 vertices
+PASS gable-roof custom / fine 642 vertices
+PASS hip-roof custom / fine 258 vertices
+PASS flat-roof custom / fine 524 vertices
+PASS chimney custom / fine 988 vertices
+PASS wall-light custom / fine 722 vertices
+PASS ceiling-light custom / fine 626 vertices
+PASS lamp-post custom / fine 1040 vertices
+PASS all presets: closed solids, outward faces, finite data, exact dimensions and validation
+PASS real opening window
+PASS real opening double-window
+PASS real opening door-frame
+PASS real opening arch
+PASS real opening door-wall
+PASS real opening window-wall
