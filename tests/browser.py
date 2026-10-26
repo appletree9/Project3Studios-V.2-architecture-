@@ -59,7 +59,7 @@ async def main():
   page.on('dialog',dialog)
   async with page.expect_download() as downloaded:await page.locator('#saveOBJ').evaluate('(b)=>b.click()')
   obj=await downloaded.value;objpath=await obj.path();assert 'v ' in pathlib.Path(objpath).read_text()
-  async with page.expect_download(predicate=lambda d:d.suggested_filename.endswith('.p3sculpt')) as downloaded:await page.locator('#p3SaveProject').evaluate('(b)=>b.click()')
+  async with page.expect_download(predicate=lambda d:d.suggested_filename.endswith('.p3sculpt')) as downloaded:await page.locator('#p3DownloadProject').evaluate('(b)=>b.click()')
   download=await downloaded.value;print('PROJECT_DOWNLOAD',download.suggested_filename,flush=True);data=pathlib.Path(await download.path()).read_bytes();assert json.loads(data)['meshes'],(download.suggested_filename,data[:80])
   await page.locator('#p3ProjectFile').set_input_files({'name':'QA.p3sculpt','mimeType':'application/json','buffer':data});await page.wait_for_timeout(250);assert (await page.evaluate('__p3QA.state()'))['objects']==1
   before_invalid=await page.evaluate('__p3QA.positions()');bad=json.loads(data);bad['meshes'][0]['indices']=[0,1,len(bad['meshes'][0]['positions'])];await page.locator('#p3ProjectFile').set_input_files({'name':'bad.p3sculpt','mimeType':'application/json','buffer':json.dumps(bad).encode()});await page.wait_for_timeout(100);assert await page.evaluate('__p3QA.positions()')==before_invalid;print('PASS malformed project rejected without changing the scene')

@@ -1,0 +1,10 @@
+PASS automatic save after editing
+PASS repeated Save Now updates same ID, no prompt or download
+PASS reload recovery preserves saved mesh count and project identity
+PASS Save a copy isolates original and copied project
+PASS separate download and native import preserve editable project
+PASS connected file overwritten by Save Now
+PASS background recovery save and file handle retained across reload
+PASS failed write leaves previous save intact
+PASS fresh tab cannot overwrite another project
+PAGE_ERRORS []

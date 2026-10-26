@@ -1,3 +1,6 @@
+Project Saving update · still 2.2.3
+Save Now updates the current device save. Auto save and recovery are enabled. Save a copy and Download project file are separate actions. See PROJECT_SAVING.md.
+
 # Building shape library — still 2.2.3
 
 Added 30 editable architectural parts, dimensions/detail controls, stairs and rails, roof and room shapes, glass, and a scene-light shortcut. Open **Building Shapes** from the left tools or inspector settings. Read `BUILDING_SHAPES.md` for the catalog and test scope. Upload the full package including `engine/architecture.js`.

@@ -251,9 +251,9 @@ const transformChecked=new Set();
 function snapshot(){return items.map(o=>{const mesh=o.mesh,g=mesh.geometry,m=originalMaterial(mesh);return {selected:mesh===selected,checked:transformChecked.has(mesh.uuid),armature:mesh.userData.armature?JSON.parse(JSON.stringify(mesh.userData.armature)):null,base:o.base,type:o.type,name:mesh.name,positions:snapshotAttribute(g,'position',g.attributes.position),indices:snapshotAttribute(g,'index',g.index),colors:snapshotAttribute(g,'color',g.attributes.color),p:mesh.position.toArray(),s:mesh.scale.toArray(),q:mesh.quaternion.toArray(),color:m.color.getHex(),roughness:m.roughness,metalness:m.metalness,flatShading:m.flatShading,opacity:m.opacity,transparent:m.transparent}})}
 function undoHistoryBytes(){const seen=new Set();let bytes=0;for(const step of [...history,...future])for(const d of step)for(const key of ['positions','indices','colors','base']){const a=d[key];if(a&&!seen.has(a)){seen.add(a);bytes+=a.length*8}}return bytes}
 
-function record(){history.push(snapshot());future.length=0;const low=(Number(navigator.deviceMemory)||8)<=4||(navigator.maxTouchPoints>1&&innerWidth<1100),budget=(low?32:96)*1048576;while(history.length>2&&(history.length>18||undoHistoryBytes()>budget))history.shift()}
+function record(){window.dispatchEvent(new Event('p3-project-change'));history.push(snapshot());future.length=0;const low=(Number(navigator.deviceMemory)||8)<=4||(navigator.maxTouchPoints>1&&innerWidth<1100),budget=(low?32:96)*1048576;while(history.length>2&&(history.length>18||undoHistoryBytes()>budget))history.shift()}
 function restore(data){releaseRig();transformChecked.clear();for(const o of items){scene.remove(o.mesh);disposeEditableMesh(o.mesh)}items=[];for(const d of data){const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(d.positions,3));if(d.indices)g.setIndex(d.indices);if(d.colors)g.setAttribute('color',new THREE.Float32BufferAttribute(d.colors,3));g.computeVertexNormals();g.computeBoundingSphere();const m=new THREE.Mesh(g,new THREE.MeshStandardMaterial({color:d.color,roughness:d.roughness,metalness:d.metalness,flatShading:!!d.flatShading,opacity:d.opacity??1,transparent:!!d.transparent,side:THREE.DoubleSide,wireframe:wire,vertexColors:!!d.colors}));m.userData.armature=d.armature?JSON.parse(JSON.stringify(d.armature)):null;m.name=d.name;m.position.fromArray(d.p);m.scale.fromArray(d.s);if(d.q)m.quaternion.fromArray(d.q);scene.add(m);items.push({mesh:m,type:d.type,base:d.base?new Float32Array(d.base):g.attributes.position.array.slice(),adj:null});if(d.checked)transformChecked.add(m.uuid)}select(items[data.findIndex(d=>d.selected)]?.mesh||items.at(-1)?.mesh||null)}
-function undo(){finishPendingSculpt();if(history.length<2)return;future.push(history.pop());restore(history.at(-1));toast('Undo')}function redo(){finishPendingSculpt();if(!future.length)return;const s=future.pop();history.push(s);restore(s);toast('Redo')}
+function undo(){finishPendingSculpt();if(history.length<2)return;future.push(history.pop());restore(history.at(-1));window.dispatchEvent(new Event('p3-project-change'));toast('Undo')}function redo(){finishPendingSculpt();if(!future.length)return;const s=future.pop();history.push(s);restore(s);window.dispatchEvent(new Event('p3-project-change'));toast('Redo')}
 function adjacency(o){const g=o.mesh.geometry;if(o.adj&&o.adjGeometry===g&&o.adjPosition===g.attributes.position&&o.adjIndex===g.index&&o.adjIndexVersion===(g.index?.version??-1))return o.adj;const n=g.attributes.position.count,adj=Array.from({length:n},()=>new Set()),index=g.index;if(index){for(let i=0;i<index.count;i+=3){const a=index.getX(i),b=index.getX(i+1),c=index.getX(i+2);adj[a].add(b);adj[a].add(c);adj[b].add(a);adj[b].add(c);adj[c].add(a);adj[c].add(b)}}else{for(let i=0;i<n;i+=3){for(const a of [i,i+1,i+2])for(const b of [i,i+1,i+2])if(a!==b)adj[a].add(b)}}o.adj=adj.map(x=>[...x]);o.adjGeometry=g;o.adjPosition=g.attributes.position;o.adjIndex=g.index;o.adjIndexVersion=g.index?.version??-1;return o.adj}
 const raycastMeshes=[],raycastHits=[];function hit(x,y){const r=renderer.domElement.getBoundingClientRect();mouse.set((x-r.left)/r.width*2-1,-(y-r.top)/r.height*2+1);camera.updateMatrixWorld();ray.setFromCamera(mouse,camera);raycastMeshes.length=0;raycastHits.length=0;for(const o of items){o.mesh.updateWorldMatrix(true,false);raycastMeshes.push(o.mesh)}ray.intersectObjects(raycastMeshes,false,raycastHits);return raycastHits[0]||null}
 const indicatorLabel=document.createElement('div');indicatorLabel.id='p3BrushIndicator';indicatorLabel.setAttribute('aria-hidden','true');indicatorLabel.style.cssText='position:fixed;pointer-events:none;z-index:490;background:#15212ee8;color:#e9faff;border:1px solid #7fe4ff;border-radius:9px;padding:5px 9px;font:600 11px system-ui;display:none;white-space:normal;max-width:278px';document.body.append(indicatorLabel);
@@ -1042,6 +1042,7 @@ $('right').append(bgPanel);
 function setWorkspaceBackground(hex){scene.background=new THREE.Color(hex);renderer.setClearColor(hex,1);root.style.background=hex;for(const id of ['background','quickBgColor','workspaceBgColor']){const el=$(id);if(el&&el.type==='color')el.value=hex}try{P3V2Storage.setItem('p3sculpt-solid-bg',hex)}catch(e){}}
 bgPanel.addEventListener('click',e=>{const b=e.target.closest('[data-bg]');if(b)setWorkspaceBackground(b.dataset.bg)});$('workspaceBgColor').addEventListener('input',e=>setWorkspaceBackground(e.target.value));
 
+import {installProjectSaving} from './engine/project-save.js';
 // Native editable Project3Studios scene document (.p3sculpt).
 // Unlike OBJ/STL, this format keeps editable vertex positions, paint colors, and transforms.
 {
@@ -1061,22 +1062,8 @@ bgPanel.addEventListener('click',e=>{const b=e.target.closest('[data-bg]');if(b)
   movieSettings:readMoviePreferences(),viewport:{background:document.getElementById('background')?.value||'#10151e'},
   selected:items.findIndex(o=>o.mesh===selected)
  }}
- saveButton.addEventListener('click',async()=>{
-  saveButton.disabled=true;try{
-   const name=(prompt('Project filename','My Sculpt')||'My Sculpt').trim().replace(/[\\/:*?"<>|]/g,'_');
-   const data=projectData(),parts=['{"meshes":['];for(let i=0;i<data.meshes.length;i++){parts.push((i?',':'')+JSON.stringify(data.meshes[i]));if(i%2===1)await new Promise(resolve=>setTimeout(resolve,0))}const {meshes,...metadata}=data;parts.push('],'+JSON.stringify(metadata).slice(1));const blob=new Blob(parts,{type:'application/json'});
-   const url=URL.createObjectURL(blob),a=document.createElement('a');
-   a.href=url;a.download=(name||'My Sculpt')+'.p3sculpt';document.body.append(a);a.click();a.remove();
-   setTimeout(()=>URL.revokeObjectURL(url),10000);toast('Project saved to Downloads');
-  }catch(error){alert('Could not save project: '+error.message)}finally{saveButton.disabled=false}
- });
- openButton.addEventListener('click',()=>{fileInput.value='';fileInput.click()});
- fileInput.addEventListener('change',async()=>{
-  const file=fileInput.files?.[0];if(!file)return;
-  try{
-   const data=JSON.parse(await file.text());
+ function restoreProject(data){
    if(data.format!=='Project3Studios Sculpt'||!Array.isArray(data.meshes)||data.meshes.length>200)throw Error('Not a supported Project3Studios project');
-   if(!confirm('Open "'+file.name+'"? This replaces the current scene. Save your current project first.'))return;
    const prepared=[];
    for(const d of data.meshes){
     if(!Array.isArray(d.positions)||d.positions.length<9||d.positions.length>9000000||d.positions.length%3||!d.positions.every(Number.isFinite))throw Error('Invalid mesh geometry');if(Array.isArray(d.indices)&&(d.indices.length%3||d.indices.some(i=>!Number.isInteger(i)||i<0||i>=d.positions.length/3)))throw Error('Invalid triangle indices');for(const key of ['position','rotation','scale'])if(d[key]&&(!Array.isArray(d[key])||d[key].length<3||!d[key].slice(0,3).every(Number.isFinite)))throw Error('Invalid object transform');
@@ -1099,10 +1086,24 @@ bgPanel.addEventListener('click',e=>{const b=e.target.closest('[data-bg]');if(b)
    data.meshes.forEach((d,i)=>{if(d.transformChecked&&items[i])transformChecked.add(items[i].mesh.uuid)});select(items[data.selected]?.mesh||items.at(-1)?.mesh||null);
    history.length=0;future.length=0;record();
    if(data.viewport?.background){const input=document.getElementById('background');if(input){input.value=data.viewport.background;input.dispatchEvent(new Event('input',{bubbles:true}))}}
-   restoreMoviePreferences(data.movieSettings);toast('Opened '+file.name);
+   restoreMoviePreferences(data.movieSettings);
+ }
+ const projectSaving=installProjectSaving({capture:projectData,restore:restoreProject,
+  busy:()=>!!(stroke||paintingStroke||transformDrag||gizmoDrag||voxelWorkerBusy||window.P3GraphicsLost||document.getElementById('p3-v2-engine')||movieBusy),
+  finish:finishInterruptedInput,saveButton,openButton});
+ openButton.addEventListener('click',()=>{fileInput.value='';fileInput.click()});
+ fileInput.addEventListener('change',async()=>{
+  const file=fileInput.files?.[0];if(!file)return;
+  try{
+   if(stroke||paintingStroke||voxelWorkerBusy||movieBusy||document.getElementById('p3-v2-engine'))throw Error('Finish the current operation first');
+   const data=JSON.parse(await file.text());
+   if(data.format!=='Project3Studios Sculpt'||!Array.isArray(data.meshes)||data.meshes.length>200)throw Error('Not a supported Project3Studios project');
+   if(!confirm('Open "'+file.name+'"? This replaces the current scene. Save your current project first.'))return;
+   finishInterruptedInput();restoreProject(data);await projectSaving.imported(file.name);toast('Opened '+file.name);
   }catch(error){alert('Could not open project: '+error.message)}
  });
 }
+
 function humanPreset(mesh){mesh.geometry.computeBoundingBox();const bb=mesh.geometry.boundingBox,h=bb.max.y-bb.min.y,c=bb.getCenter(new THREE.Vector3()),bones=[];function joint(name,parent,x,y,z=0){const world=[c.x+x*h,bb.min.y+y*h,c.z+z*h];bones.push({name,parent,world,rest:parent<0?world:world.map((v,k)=>v-bones[parent].world[k]),pose:[0,0,0]});return bones.length-1}
  const root=joint('Pelvis / Root',-1,0,.51),sp=joint('Spine',root,0,.60),ch=joint('Chest',sp,0,.72),neck=joint('Neck',ch,0,.84),head=joint('Head',neck,0,.91);joint('Head Tip',head,0,.99);
  for(const [side,s] of [['Left',1],['Right',-1]]){const clav=joint(side+' Clavicle',ch,s*.07,.76),sh=joint(side+' Shoulder',clav,s*.14,.76),ua=joint(side+' Upper Arm',sh,s*.19,.70),la=joint(side+' Lower Arm',ua,s*.27,.59),hand=joint(side+' Hand',la,s*.34,.49);for(let f=0;f<5;f++){let parent=hand;for(let j=0;j<4;j++)parent=joint(side+' '+['Thumb','Index','Middle','Ring','Little'][f]+' '+(j+1),parent,s*(.35+j*.019-(f===0?.015:0)),.48-j*.017+(f===0?.025:0),(f-2)*.012)}const thigh=joint(side+' Upper Leg',root,s*.08,.49),shin=joint(side+' Lower Leg',thigh,s*.09,.27),foot=joint(side+' Foot',shin,s*.09,.055);for(let t=0;t<5;t++){const toe=joint(side+' Toe '+(t+1),foot,s*(.065+t*.012),.025,.065);joint(side+' Toe '+(t+1)+' Tip',toe,s*(.065+t*.012),.025,.095)}}return {bones,current:0,mode:'rest'}}
@@ -1769,7 +1770,7 @@ function organize(){
  function chunks(panel,map,initial){let key=initial;for(const n of [...panel.children]){if(n.matches('.p3-free-handle,.p3-panelbar,#p3-workspace-side'))continue;if(n.classList.contains('heading'))key=map[n.textContent.trim()]||key;if(key)move(n,key)}}
  // Split the mixed mesh/render panel before grouping the rest of the inspector.
  const poly=document.getElementById('polyPanel');if(poly){chunks(poly,{'IMPORT 3D MODELS':'models','CHARACTER BASE MESHES':'models','VOXEL REMESH':'mesh','POLYGON EDITOR':'mesh','HIGH-RESOLUTION RENDER':'render'},'models');poly.hidden=true}
- const special=new Map();for(const [id,key] of [['p3Architecture','architecture'],['p3PrintPanel','print'],['p3MovieEditor','movie'],['p3ExportPresetPanel','files'],['p3PerformanceSettings','interface'],['p3KeyboardSettings','interface'],['p3FaceEditor','mesh'],['p3LightDetails','lights'],['measurePanel','view'],['backgroundPresets','view']]){const node=document.getElementById(id);if(node)special.set(node,key)}
+ const special=new Map();for(const [id,key] of [['p3ProjectSaving','files'],['p3Architecture','architecture'],['p3PrintPanel','print'],['p3MovieEditor','movie'],['p3ExportPresetPanel','files'],['p3PerformanceSettings','interface'],['p3KeyboardSettings','interface'],['p3FaceEditor','mesh'],['p3LightDetails','lights'],['measurePanel','view'],['backgroundPresets','view']]){const node=document.getElementById(id);if(node)special.set(node,key)}
  const lightOutline=document.getElementById('showLightOutlines');if(lightOutline)special.set(lightOutline.closest('label')?.parentElement,'lights');
  const merge=document.getElementById('mergeGo')?.closest('section');if(merge)special.set(merge,'mesh');
  let key='objects';const map={'SCENE OBJECTS':'objects','OBJECT GRAB / TRANSFORM':'objects','OBJECT ROTATION':'objects','OBJECT TRANSFORM':'objects','MATERIAL':'materials','LIGHTING RIG':'lights','RENDER CAMERA':'camera','CAMERA PROJECTION':'camera','CAMERA LENS':'camera','VIEWPORT COLOR':'view','POST PROCESSING / DISPLAY':'render','MESH ACTIONS':'mesh'};

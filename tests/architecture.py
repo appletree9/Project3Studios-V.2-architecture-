@@ -30,7 +30,7 @@ async def main():
   await page.locator('#p3ArchCategory').select_option('all',force=True);await page.locator('#p3ArchPart').select_option('window-pane',force=True);await page.locator('#p3ArchAdd').evaluate('(b)=>b.click()')
   async def dialog(d):await d.accept('Building QA' if d.type=='prompt' else None)
   page.on('dialog',dialog)
-  async with page.expect_download(predicate=lambda d:d.suggested_filename.endswith('.p3sculpt')) as download:await page.locator('#p3SaveProject').evaluate('(b)=>b.click()')
+  async with page.expect_download(predicate=lambda d:d.suggested_filename.endswith('.p3sculpt')) as download:await page.locator('#p3DownloadProject').evaluate('(b)=>b.click()')
   file=await download.value;data=pathlib.Path(await file.path()).read_bytes();parsed=json.loads(data);last=parsed['meshes'][-1];assert last['type']=='Glass pane' and last['material']['transparent'] and last['material']['flatShading'];objects=(await page.evaluate('__p3QA.state()'))['objects'];await page.locator('#p3ProjectFile').set_input_files({'name':'Building QA.p3sculpt','mimeType':'application/json','buffer':data});await page.wait_for_timeout(300);assert (await page.evaluate('__p3QA.state()'))['objects']==objects;state=await page.evaluate('__p3QA.arch()');assert state['transparent'] and state['flat'] and abs(state['opacity']-.32)<1e-6;print('PASS native save/reopen retains architecture and glass')
   async with page.expect_download(predicate=lambda d:d.suggested_filename.endswith('.stl')) as download:await page.locator('#measureSTL').evaluate('(b)=>b.click()')
   file=await download.value;assert pathlib.Path(await file.path()).stat().st_size>100;print('PASS architecture STL export')

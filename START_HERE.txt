@@ -1,3 +1,6 @@
+Project Saving update · still 2.2.3
+Save Now updates the current device save. Auto save and recovery are enabled. Save a copy and Download project file are separate actions. See PROJECT_SAVING.md.
+
 BUILDING SHAPES UPDATE (still 2.2.3): Upload all files, including engine/architecture.js. Open Building Shapes in the left tools panel. Read BUILDING_SHAPES.md.
 
 Project3Studios V2.2.3 — complete app and deployment package
